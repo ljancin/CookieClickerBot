@@ -7,6 +7,10 @@ from cookie_clicker_bot.numbers import ZERO_BIG_NUMBER
 def sort_by_profitability(buyables):
     return sorted(buyables, key=lambda b: b.get_profitability(), reverse=True)
 
+# TODO if waiting for a long time for some buyable
+# is it worth it to buy some currently available ones and boost cps
+# so that the final time to the expensive one would actually be lesser
+# than if you just waited?
 
 def get_best_buy(cookie_clicker):
     cookie_clicker_copy = cookie_clicker.simulation_copy()
@@ -60,7 +64,6 @@ def main():
 
     next_buy = None
     last_message = None
-    cps_previous = ZERO_BIG_NUMBER
 
     while True:
         # if there is no next buy don't click but determine what the best buy is
@@ -77,10 +80,6 @@ def main():
             next_buy = None
 
         cookie_clicker.update()
-
-        # golden cookie end
-        if cookie_clicker.cps < cps_previous:
-            next_buy = None
 
         if next_buy is not None and cookie_clicker.bank < next_buy.price:
             continue
