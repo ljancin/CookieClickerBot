@@ -1,0 +1,1 @@
+return Game.time;
