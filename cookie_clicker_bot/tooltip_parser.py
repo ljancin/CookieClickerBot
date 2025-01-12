@@ -1,7 +1,6 @@
 from html.parser import HTMLParser
-from BigNumber.BigNumber import BigNumber
 
-from cookie_clicker_bot.numbers import BigNumberFromString
+from cookie_clicker_bot.numbers import BigNumberFromString, ZERO_BIG_NUMBER
 
 
 class TootlipParser(HTMLParser):
@@ -10,13 +9,13 @@ class TootlipParser(HTMLParser):
 
     count = 0
     price = 0
-    totalCps = BigNumber(0)
+    totalCps = ZERO_BIG_NUMBER
 
     def Reset(self):
         self.data = []
         self.lastClass = None
         self.count = 0
-        self.totalCps = BigNumber(0)
+        self.totalCps = ZERO_BIG_NUMBER
 
     def Get(self):
         return self.count, self.price, self.totalCps

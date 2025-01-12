@@ -1,3 +1,8 @@
 {
-  "SAVE": "LAST"
+  "game": {
+    "type": "save",
+    "save": "current"
+  },
+  "max_wait_time": null,
+  "target_clicks_per_second": null
 }

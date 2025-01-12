@@ -7,22 +7,20 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 
-# TODO url from ctor?
-URL = 'https://orteil.dashnet.org/cookieclicker/'
+from cookie_clicker_bot.scripts import SCRIPTS_ROOT
 
 WAIT_TIMEOUT = 1
-SCRIPTS_ROOT = os.path.join("cookie_clicker_bot", "js")
 
 
 class WebDriverManager:
 
-    def __init__(self, profile_path):
+    def __init__(self, url, profile_path):
         chrome_options = Options()
 
         chrome_options.add_argument(f"user-data-dir={profile_path}")
 
         self.driver = webdriver.Chrome(options=chrome_options)
-        self.driver.get(URL)
+        self.driver.get(url)
         self.actions = ActionChains(self.driver)
 
         self.scripts = {}

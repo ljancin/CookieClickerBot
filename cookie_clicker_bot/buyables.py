@@ -1,5 +1,6 @@
 from BigNumber.BigNumber import BigNumber
 
+from cookie_clicker_bot.numbers import ZERO_BIG_NUMBER
 from cookie_clicker_bot.scripts import Scripts
 import time
 
@@ -12,6 +13,8 @@ BUILDING_PRICE_MULTIPLIER = 1.15
 
 
 class Buyable:
+    hover_before_buy = False
+
     def __init__(self, cookie_clicker, name, gain, price, elementId):
         self.cookie_clicker = cookie_clicker
         self.name = name
@@ -23,11 +26,25 @@ class Buyable:
         XPATH = f"//div[@id='{self.elementId}']"
         element = self.cookie_clicker.manager.get_element(XPATH, True)
 
-        element_class = element.get_attribute("class")
+        try:
+            element_class = element.get_attribute("class")
+        except (Exception,):
+            return False
+
         if "enabled" not in element_class:
             return False
 
         self.cookie_clicker.manager.execute_script(Scripts.SCROLL_INTO_VIEW, element)
+
+        # if an upgrade is in the second row or below
+        # wait a bit for the upgrades panel to expand
+        if self.hover_before_buy:
+            try:
+                self.cookie_clicker.manager.move_to_element(element)
+                self.cookie_clicker.manager.wait_until_present(UPGRADE_TOOLTIP_XPATH)
+                time.sleep(WAIT_AFTER_HOVER)
+            except (Exception,):
+                pass
 
         try:
             element.click()
@@ -46,6 +63,7 @@ class Buyable:
         return self.gain / self.price
 
     def time_to_buy(self):
+        # TODO does this need to be calculated in update and instead of a getter just read from a member variable?
         if self.price <= self.cookie_clicker.bank:
             return 0
 
@@ -74,81 +92,108 @@ class Building(Buyable):
     def buy_simulation(self):
         super().buy_simulation()
 
+        # gain = how much cps one building generates
+        self.count += 1
+        self.total_cps += self.gain
+        self.gain = self.total_cps / self.count
+
         self.price *= BUILDING_PRICE_MULTIPLIER
 
     def sell(self):
         pass
 
-    def get_profitability(self):
-        return super().get_profitability()
-
 
 class Upgrade(Buyable):
+    hover_before_buy = True
+
     def __init__(self, cookie_clicker, name, gain, price, elementId):
         super().__init__(cookie_clicker, name, gain, price, elementId)
 
+
+class BuildingUpgradeMultiplier(Upgrade):
+    def __init__(self, cookie_clicker, name, amount, price, building, elementId):
+        self.building = building
+        self.amount = amount
+
+        super().__init__(cookie_clicker, name, building.total_cps * amount, price, elementId)
+
     def copy(self, cookie_clicker):
-        return Upgrade(cookie_clicker, self.name, self.gain, self.price, None)
-
-    def buy(self):
-        XPATH = f"//div[@id='{self.elementId}']"
-        element = self.cookie_clicker.manager.get_element(XPATH, True)
-
-        try:
-            elementClass = element.get_attribute("class")
-        except (Exception,):
-            return False
-
-        if "enabled" not in elementClass:
-            return False
-
-        self.cookie_clicker.manager.execute_script(Scripts.SCROLL_INTO_VIEW, element)
-
-        # TODO extract this
-        try:
-            self.cookie_clicker.manager.move_to_element(element)
-
-            self.cookie_clicker.manager.wait_until_present(UPGRADE_TOOLTIP_XPATH)
-
-            time.sleep(WAIT_AFTER_HOVER)
-
-        except (Exception,):
-            pass
-
-        try:
-            element.click()
-            return True
-        except (Exception,):
-            return False
+        building = cookie_clicker.get_building(self.building.name)
+        return BuildingUpgradeMultiplier(cookie_clicker, self.name, self.amount, self.price, building, None)
 
     def buy_simulation(self):
         super().buy_simulation()
 
-        if self in self.cookie_clicker.upgrades:
-            self.cookie_clicker.upgrades.remove(self)
-        elif self in self.cookie_clicker.upgrades_unknown:
-            self.cookie_clicker.upgrades_unknown.remove(self)
-        else:
-            raise
+        self.building.total_cps *= (self.amount + 1)
+        self.building.gain = self.building.total_cps / self.building.count
 
 
-class BuildingUpgrade(Upgrade):
+class BuildingUpgradeAmount(Upgrade):
     def __init__(self, cookie_clicker, name, amount, price, building, elementId):
-        super().__init__(cookie_clicker, name, building.total_cps * amount, price, elementId)
+        self.building = building
+        self.amount = amount
+
+        super().__init__(cookie_clicker, name, amount, price, elementId)
+
+    def copy(self, cookie_clicker):
+        building = cookie_clicker.get_building(self.building.name)
+        return BuildingUpgradeMultiplier(cookie_clicker, self.name, self.amount, self.price, building, None)
+
+    def buy_simulation(self):
+        super().buy_simulation()
+
+        self.building.total_cps += self.amount
+        self.building.gain = self.building.total_cps / self.building.count
 
 
 class CompositeBuildingUpgrade(Upgrade):
     def __init__(self, cookie_clicker, name, amount, price, buildings, elementId):
-        gain = BigNumber(0)
+        self.buildings = buildings
+        self.amount = amount
+
+        gain = ZERO_BIG_NUMBER
         for b in buildings:
             gain += b.total_cps * BigNumber(amount)
 
         super().__init__(cookie_clicker, name, gain, price, elementId)
 
+    def copy(self, cookie_clicker):
+        buildings = []
+        for b in self.buildings:
+            buildings.append(cookie_clicker.get_building(b.name))
+
+        return CompositeBuildingUpgrade(cookie_clicker, self.name, self.amount, self.price, buildings, None)
+
+    def buy_simulation(self):
+        super().buy_simulation()
+
+        for b in self.buildings:
+            if b.count == 0:
+                continue
+
+            b.total_cps *= (self.amount + 1)
+            b.gain = b.total_cps / b.count
+
 
 class CpsUpgrade(Upgrade):
     def __init__(self, cookie_clicker, name, amount, price, elementId):
         super().__init__(cookie_clicker, name, cookie_clicker.cps * amount, price, elementId)
+
+        self.amount = amount
+
+    def copy(self, cookie_clicker):
+        return CpsUpgrade(cookie_clicker, self.name, self.amount, self.price, None)
+
+    def buy_simulation(self):
+        super().buy_simulation()
+
+        # TODO                                  does cps upgrade affect clicking?
+        for b in self.cookie_clicker.buildings + [self.cookie_clicker.clicking]:
+            if b.count == 0:
+                continue
+
+            b.total_cps *= self.amount
+            b.gain = b.total_cps / b.count
 
 
 class OtherUpgrade(Upgrade):

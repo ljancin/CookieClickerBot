@@ -1,0 +1,1 @@
+return Object.keys(Game.buffs).length;
