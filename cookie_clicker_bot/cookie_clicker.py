@@ -37,7 +37,7 @@ UPGRADE_ELEMENTS_XPATH = f"//div[contains(@id, 'upgrade') and contains(@class, '
 PRODUCTS_XPATH = f"//div[@id='products' and contains(@class, 'storeSection')]"
 PRODUCT_ELEMENTS_XPATH = f"//div[contains(@id, 'product') and contains(@class, 'product unlocked')]"
 COOKIE_XPATH = f"//button[@id='bigCookie']"
-GOLDEN_COOKIE_PATH = f"//div[@class='shimmer']"
+GOLDEN_COOKIE_PATH = f"//div[@class='shimmer' and @alt!='Wrath cookie']"
 CLOSE_NOTIFICATIONS_XPATH = f"//div[@class='framed close sidenote']"
 
 CLICKING_NAME = "Clicking"
@@ -236,7 +236,6 @@ class CookieClicker:
         return True
 
     def click_golden_cookie(self):
-        # TODO wrath cookie
         golden_cookies = self.manager.get_elements(GOLDEN_COOKIE_PATH, False)
 
         golden_cookie_clicked = False
