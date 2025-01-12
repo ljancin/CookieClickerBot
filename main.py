@@ -102,8 +102,8 @@ def get_best_buy(cookie_clicker):
             most_saved_time = saved_time
             best_buy = cheaper_buyable
 
-    if most_saved_time > 0:
-        print(f"saving {most_saved_time},by buying {best_buy.name} instead of waiting for {original_best_buy.name}")
+    #if most_saved_time > 0:
+    #    print(f"saving {most_saved_time} by buying {best_buy.name} instead of waiting for {original_best_buy.name}")
 
     return best_buy
 

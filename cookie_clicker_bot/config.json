@@ -4,5 +4,6 @@
     "save": "current"
   },
   "max_wait_time": null,
-  "target_clicks_per_second": null
+  "target_clicks_per_second": null,
+  "toggle_clicking_key": "F4"
 }

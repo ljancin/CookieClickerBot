@@ -6,6 +6,9 @@ import json
 from timeit import default_timer as timer
 import copy
 
+from pynput import keyboard
+from pynput.keyboard import Key
+
 from cookie_clicker_bot.buyables import Building, CompositeBuildingUpgrade, OtherUpgrade, CpsUpgrade, \
     BuildingUpgradeMultiplier, BuildingUpgradeAmount
 from cookie_clicker_bot.numbers import BigNumberFromString, INFINITY, int_multipliers, ZERO_BIG_NUMBER
@@ -27,6 +30,7 @@ LAST = "last"
 SAVE = "save"
 MAX_WAIT_TIME = "max_wait_time"
 TARGET_CLICK_PER_SECOND = "target_clicks_per_second"
+TOGGLE_CLICKING_KEY = "toggle_clicking_key"
 
 UPGRADES_XPATH = f"//div[@id='upgrades' and contains(@class, 'storeSection upgradeBox')]"
 UPGRADE_ELEMENTS_XPATH = f"//div[contains(@id, 'upgrade') and contains(@class, 'crate upgrade')]"
@@ -41,6 +45,10 @@ CLICKING_NAME = "Clicking"
 CLICK_SEGMENT_DURATION = 2
 CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL = 1
 CHECK_CLICK_FREQUENCY_INTERVAL_TARGET = 5
+
+TOOLTIP_TO_FULL_NAME = {
+    "Antim. condenser": "Antimatter condenser"
+}
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(script_dir, CONFIG_PATH)
@@ -107,6 +115,14 @@ class Config:
             else:
                 self.target_clicks_per_second = None
 
+            if TOGGLE_CLICKING_KEY in self.config:
+                key_string = self.config[TOGGLE_CLICKING_KEY].lower()
+
+                if hasattr(Key, key_string):
+                    self.toggle_clicking_key = getattr(Key, key_string)
+                else:
+                    self.toggle_clicking_key = key_string
+
 
 class CookieClicker:
     tooltip_parser = TootlipParser()
@@ -116,6 +132,7 @@ class CookieClicker:
     check_click_frequency_interval = CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL
 
     def __init__(self):
+        self.listener = None
         self.wait_after_click = None
         self.config = None
         self.buildings = []
@@ -134,10 +151,19 @@ class CookieClicker:
         self.avg_clicks_per_second = 0
         self.click_measure_start = None
 
+        self.do_click = True
+        self.toggle_clicking_listener = keyboard.Listener(on_press=self.on_key_down)
+
+    def on_key_down(self, key):
+        if key == self.config.toggle_clicking_key:
+            self.do_click = not self.do_click
+
     def start(self):
         self.config = Config()
         if self.config.target_clicks_per_second is not None and self.config.target_clicks_per_second > 0:
             self.wait_after_click = 1 / self.config.target_clicks_per_second
+
+        self.toggle_clicking_listener.start()
 
         self.manager = WebDriverManager(URL, self.config.profile_path)
 
@@ -188,6 +214,9 @@ class CookieClicker:
         try:
             click_segment_start = timer()
             while timer() - click_segment_start < duration:
+                if not self.do_click:
+                    return
+
                 cookie = self.manager.wait_until_clickable(COOKIE_XPATH)
                 cookie.click()
 
@@ -238,8 +267,11 @@ class CookieClicker:
 
         for p in product_elements:
             building_name = p.text.split('\n')[0]
+            if building_name in TOOLTIP_TO_FULL_NAME:
+                building_name = TOOLTIP_TO_FULL_NAME[building_name]
 
             tooltip_html = self.manager.execute_script(Scripts.GET_BUILDING_TOOLTIP, building_name)
+
             self.tooltip_parser.Reset()
             self.tooltip_parser.feed(tooltip_html)
             count, price, totalCps = self.tooltip_parser.Get()
