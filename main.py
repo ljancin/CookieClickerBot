@@ -50,6 +50,8 @@ def get_best_buy(cookie_clicker):
             if wait_for_buyable.can_buy():
                 wait_for_buyable.buy_simulation()
 
+                # TODO check if there evaluable buyables are empty!
+                buyables_wait_for = cookie_clicker_copy.get_evaluable_buyables()[1:]
                 buyables_wait_for_sorted = sort_by_profitability(buyables_wait_for)
                 buyables_wait_for_sorted_best_buy = buyables_wait_for_sorted[0]
 
@@ -60,6 +62,7 @@ def get_best_buy(cookie_clicker):
 
             else:
                 time_to_buy_wait_for_buyable = wait_for_buyable.time_to_buy()
+
                 elapsed_time += time_to_buy_wait_for_buyable
                 cookie_clicker_copy.bank += cookie_clicker_copy.cps * time_to_buy_wait_for_buyable
 
@@ -195,7 +198,8 @@ def main():
             if next_buy is not None and cookie_clicker.building_for_number_achievement is not None:
                 cookie_clicker.building_for_number_achievement.buy()
                 print(f"Buying {cookie_clicker.building_for_number_achievement.name} for achievement")
-                next_buy = None
+                # ?
+                #next_buy = None
             else:
                 print(f"Waiting for {next_buy.name}, ETA: {time_to_buy}")
 

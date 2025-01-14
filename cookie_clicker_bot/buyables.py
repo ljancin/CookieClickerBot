@@ -110,6 +110,11 @@ class Upgrade(Buyable):
     def __init__(self, cookie_clicker, name, gain, price, elementId):
         super().__init__(cookie_clicker, name, gain, price, elementId)
 
+    def buy_simulation(self):
+        super().buy_simulation()
+
+        self.cookie_clicker.upgrades.remove(self)
+
 
 class BuildingUpgradeMultiplier(Upgrade):
     def __init__(self, cookie_clicker, name, amount, price, building, elementId):
