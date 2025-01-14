@@ -1,3 +1,7 @@
+A bot which plays the browser version of Cookie Clicker: https://orteil.dashnet.org/cookieclicker/ 
+
+Only English is supported.
+
 # Requirements
 * Python 3.10
 * Google Chrome
@@ -7,8 +11,6 @@
 pip install -r requrements.txt
 python main.py
 ```
-
-Only English is supported.
 
 # Toggle clicking
 Since the bot's continuous clicking on the cookie can make interacting with the page manually impossible, 
@@ -28,6 +30,10 @@ Possible values:
 * `"new"`: loads last saved game. Creates a new save if none exist.
 * `"last"`: starts a new game every time.
 * `"save"`: loads a save with the specified name.
+
+Default value is `"last"`.
+
+
 ### `save`
 If `type` is `save`, determines the saved game from the `saves` folder which will be loaded.
 Example: `"11_01_2025-19_23_47"`

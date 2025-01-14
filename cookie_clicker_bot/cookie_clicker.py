@@ -29,9 +29,9 @@ CLICK_SEGMENT_DURATION = 2
 CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL = 1
 CHECK_CLICK_FREQUENCY_INTERVAL_TARGET = 5
 
-BUILDING_NUMBER_ACHIEVEMENTS = [50, 100, 150, 200]
+BUILDING_NUMBER_ACHIEVEMENTS = [50, 100, 150, 200, 250, 300]
 BUILDING_NUMBER_ACHIEVEMENTS_SPECIAL = {
-    CURSOR_NAME: [50, 100, 200]
+    CURSOR_NAME: [50, 100, 200, 250, 300]
 }
 
 TOOLTIP_TO_FULL_NAME = {
@@ -192,7 +192,7 @@ class CookieClicker:
             try:
                 tooltip_html = self.manager.execute_script(Scripts.GET_BUILDING_TOOLTIP, building_name)
             except Exception as e:
-                print(building_name)
+                print(building_name, flush=True)
                 raise
 
             self.tooltip_parser.Reset()

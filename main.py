@@ -106,7 +106,8 @@ def get_best_buy(cookie_clicker):
             best_buy = cheaper_buyable
 
     # if most_saved_time > 0:
-    #    print(f"saving {most_saved_time} by buying {best_buy.name} instead of waiting for {original_best_buy.name}")
+    #    print(f"saving {most_saved_time} by buying {best_buy.name} instead of waiting for {original_best_buy.name}",
+    #    flush=True)
 
     return best_buy
 
@@ -117,6 +118,7 @@ def get_best_buy(cookie_clicker):
 # TODO what happens at the legacy screen?
 
 # TODO save log to save folder
+
 def main():
     cookie_clicker = CookieClicker()
     cookie_clicker.start()
@@ -164,7 +166,7 @@ def main():
             bought_unknown = False
             for u in cookie_clicker.upgrades_unknown:
                 if u.can_buy():
-                    print(f"Buying other upgrade {u.name}")
+                    print(f"Buying other upgrade {u.name}", flush=True)
                     u.buy()
                     bought_unknown = True
                     break
@@ -184,7 +186,7 @@ def main():
 
         time_to_buy = best_buy.time_to_buy()
         if time_to_buy == 0:
-            print(f"Buying {best_buy.name}")
+            print(f"Buying {best_buy.name}", flush=True)
             best_buy.buy()
             next_buy = None
 
@@ -197,11 +199,10 @@ def main():
 
             if next_buy is not None and cookie_clicker.building_for_number_achievement is not None:
                 cookie_clicker.building_for_number_achievement.buy()
-                print(f"Buying {cookie_clicker.building_for_number_achievement.name} for achievement")
-                # ?
-                #next_buy = None
+                print(f"Buying {cookie_clicker.building_for_number_achievement.name} for achievement", flush=True)
+                next_buy = None
             else:
-                print(f"Waiting for {next_buy.name}, ETA: {time_to_buy}")
+                print(f"Waiting for {next_buy.name}, ETA: {time_to_buy}", flush=True)
 
 
 if __name__ == "__main__":

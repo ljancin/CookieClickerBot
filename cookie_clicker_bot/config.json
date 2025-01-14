@@ -1,10 +1,10 @@
 {
   "game": {
-    "type": "save",
-    "save": "current"
+    "type": "last",
+    "save": ""
   },
   "max_wait_time": null,
   "target_clicks_per_second": null,
   "toggle_clicking_key": "F4",
-  "max_buildings_missing_to_chase_achievement": 20
+  "max_buildings_missing_to_chase_achievement": 40
 }
