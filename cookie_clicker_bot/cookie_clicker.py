@@ -1,36 +1,18 @@
 import time
-from datetime import datetime
-import os
 from BigNumber.BigNumber import BigNumber
-import json
 from timeit import default_timer as timer
 import copy
-
 from pynput import keyboard
-from pynput.keyboard import Key
 
 from cookie_clicker_bot.buyables import Building, CompositeBuildingUpgrade, OtherUpgrade, CpsUpgrade, \
-    BuildingUpgradeMultiplier, BuildingUpgradeAmount
+    BuildingUpgradeMultiplier, BuildingUpgradeAmount, BUILDING_PRICE_MULTIPLIER
+from cookie_clicker_bot.config import Config
 from cookie_clicker_bot.numbers import BigNumberFromString, INFINITY, int_multipliers, ZERO_BIG_NUMBER
 from cookie_clicker_bot.scripts import Scripts
 from cookie_clicker_bot.tooltip_parser import TootlipParser
 from cookie_clicker_bot.web_driver_manager import WebDriverManager
 
 URL = 'https://orteil.dashnet.org/cookieclicker/'
-
-SAVES_FOLDER = "saves"
-SAVE_DATE_FORMAT = "%d_%m_%Y-%H_%M_%S"
-
-CONFIG_PATH = "config.json"
-
-GAME = "game"
-TYPE = "type"
-NEW = "new"
-LAST = "last"
-SAVE = "save"
-MAX_WAIT_TIME = "max_wait_time"
-TARGET_CLICK_PER_SECOND = "target_clicks_per_second"
-TOGGLE_CLICKING_KEY = "toggle_clicking_key"
 
 UPGRADES_XPATH = f"//div[@id='upgrades' and contains(@class, 'storeSection upgradeBox')]"
 UPGRADE_ELEMENTS_XPATH = f"//div[contains(@id, 'upgrade') and contains(@class, 'crate upgrade')]"
@@ -41,87 +23,20 @@ GOLDEN_COOKIE_PATH = f"//div[@class='shimmer' and @alt!='Wrath cookie']"
 CLOSE_NOTIFICATIONS_XPATH = f"//div[@class='framed close sidenote']"
 
 CLICKING_NAME = "Clicking"
+CURSOR_NAME = "Cursor"
 
 CLICK_SEGMENT_DURATION = 2
 CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL = 1
 CHECK_CLICK_FREQUENCY_INTERVAL_TARGET = 5
 
+BUILDING_NUMBER_ACHIEVEMENTS = [50, 100, 150, 200]
+BUILDING_NUMBER_ACHIEVEMENTS_SPECIAL = {
+    CURSOR_NAME: [50, 100, 200]
+}
+
 TOOLTIP_TO_FULL_NAME = {
     "Antim. condenser": "Antimatter condenser"
 }
-
-script_dir = os.path.dirname(os.path.abspath(__file__))
-config_path = os.path.join(script_dir, CONFIG_PATH)
-
-
-class Config:
-    def get_profile_path(self):
-        def new_game():
-            now = datetime.now()
-            path = os.path.join(SAVES_FOLDER, now.strftime(SAVE_DATE_FORMAT))
-            os.makedirs(path)
-            return path
-
-        if not os.path.exists(SAVES_FOLDER):
-            os.makedirs(SAVES_FOLDER)
-
-        saves = os.listdir(SAVES_FOLDER)
-
-        if GAME in self.config:
-            game = self.config[GAME]
-
-            if TYPE in game:
-                game_type = game[TYPE]
-            else:
-                raise KeyError("config: game type missing.")
-
-            if game_type == NEW:
-                profile_path = new_game()
-            elif game_type == LAST:
-                if len(saves) > 0:
-                    profile_path = os.path.join(SAVES_FOLDER, saves[-1])
-                else:
-                    profile_path = new_game()
-            elif game_type == SAVE:
-                if SAVE in game:
-                    save = game[SAVE]
-                else:
-                    raise KeyError("config: game save not specified.")
-
-                profile_path = os.path.join(SAVES_FOLDER, save)
-                if not os.path.exists(profile_path):
-                    raise ValueError("config: specified save does not exist.")
-            else:
-                raise ValueError("config: invalid game type.")
-
-        else:
-            raise KeyError("config: game section missing.")
-
-        return os.path.abspath(profile_path)
-
-    def __init__(self):
-        with open(config_path, 'r') as config_file:
-            self.config = json.load(config_file)
-
-            self.profile_path = self.get_profile_path()
-
-            if MAX_WAIT_TIME in self.config:
-                self.max_wait_time = self.config[MAX_WAIT_TIME]
-            else:
-                self.max_wait_time = None
-
-            if TARGET_CLICK_PER_SECOND in self.config:
-                self.target_clicks_per_second = self.config[TARGET_CLICK_PER_SECOND]
-            else:
-                self.target_clicks_per_second = None
-
-            if TOGGLE_CLICKING_KEY in self.config:
-                key_string = self.config[TOGGLE_CLICKING_KEY].lower()
-
-                if hasattr(Key, key_string):
-                    self.toggle_clicking_key = getattr(Key, key_string)
-                else:
-                    self.toggle_clicking_key = key_string
 
 
 class CookieClicker:
@@ -132,6 +47,7 @@ class CookieClicker:
     check_click_frequency_interval = CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL
 
     def __init__(self):
+        self.building_for_number_achievement = None
         self.listener = None
         self.wait_after_click = None
         self.config = None
@@ -265,17 +181,53 @@ class CookieClicker:
             self.clicking = Building(self, CLICKING_NAME, 1, INFINITY, self.clicking_cps, None)
 
         for p in product_elements:
+            # TODO element.get_attribute("text")
+            #   :try except -> return false
+            #   while false {element.get_attribute("text")} ? <- inside get_attribute function
             building_name = p.text.split('\n')[0]
             if building_name in TOOLTIP_TO_FULL_NAME:
                 building_name = TOOLTIP_TO_FULL_NAME[building_name]
 
-            tooltip_html = self.manager.execute_script(Scripts.GET_BUILDING_TOOLTIP, building_name)
+            # TODO debug try except
+            try:
+                tooltip_html = self.manager.execute_script(Scripts.GET_BUILDING_TOOLTIP, building_name)
+            except Exception as e:
+                print(building_name)
+                raise
 
             self.tooltip_parser.Reset()
             self.tooltip_parser.feed(tooltip_html)
             count, price, totalCps = self.tooltip_parser.Get()
 
             self.buildings.append(Building(self, building_name, count, price, totalCps, p.get_attribute("id")))
+
+        self.building_for_number_achievement = None
+        min_achievement_price = INFINITY
+        for b in self.buildings:
+            if b.name in BUILDING_NUMBER_ACHIEVEMENTS_SPECIAL:
+                b_achievements = BUILDING_NUMBER_ACHIEVEMENTS_SPECIAL[b.name]
+            else:
+                b_achievements = BUILDING_NUMBER_ACHIEVEMENTS
+
+            next_achievement = -1
+            for i in range(len(b_achievements)):
+                if b_achievements[i] > b.count:
+                    next_achievement = b_achievements[i]
+                    break
+
+            if next_achievement > 0:
+                buildings_missing = next_achievement - b.count
+                if buildings_missing > self.config.max_buildings_missing_to_chase_achievement:
+                    continue
+
+                achievement_price = b.price * \
+                                    (1 - BUILDING_PRICE_MULTIPLIER ** buildings_missing) / \
+                                    (1 - BUILDING_PRICE_MULTIPLIER)
+
+                if self.bank >= achievement_price and \
+                        (achievement_price < min_achievement_price or self.building_for_number_achievement is None):
+                    min_achievement_price = achievement_price
+                    self.building_for_number_achievement = b
 
     def UpgradeFactory(self, upgrade_element, upgrades_js):
         try:
@@ -302,7 +254,7 @@ class CookieClicker:
         if "building" not in upgrade_object:
             if "mouse and cursors are" in desc:
                 multiplier = int_multipliers[get_first_bold_section(desc)]
-                buildingsToUpgrade = [self.clicking, self.get_building("Cursor")]
+                buildingsToUpgrade = [self.clicking, self.get_building(CURSOR_NAME)]
                 return CompositeBuildingUpgrade(self, name, multiplier - 1, price, buildingsToUpgrade,
                                                 upgrade_id)
 

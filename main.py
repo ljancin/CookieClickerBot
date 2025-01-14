@@ -72,7 +72,7 @@ def get_best_buy(cookie_clicker):
     if best_buy.can_buy():
         return best_buy
 
-    original_best_buy = best_buy
+    # original_best_buy = best_buy
     best_buy_time_to_buy_original = best_buy.time_to_buy()
 
     cheaper_buyables = []
@@ -102,7 +102,7 @@ def get_best_buy(cookie_clicker):
             most_saved_time = saved_time
             best_buy = cheaper_buyable
 
-    #if most_saved_time > 0:
+    # if most_saved_time > 0:
     #    print(f"saving {most_saved_time} by buying {best_buy.name} instead of waiting for {original_best_buy.name}")
 
     return best_buy
@@ -192,7 +192,12 @@ def main():
                 next_buy = best_upgrade_unknown
                 time_to_buy = best_upgrade_unknown.time_to_buy()
 
-            print(f"Waiting for {next_buy.name}, ETA: {time_to_buy}")
+            if next_buy is not None and cookie_clicker.building_for_number_achievement is not None:
+                cookie_clicker.building_for_number_achievement.buy()
+                print(f"Buying {cookie_clicker.building_for_number_achievement.name} for achievement")
+                next_buy = None
+            else:
+                print(f"Waiting for {next_buy.name}, ETA: {time_to_buy}")
 
 
 if __name__ == "__main__":

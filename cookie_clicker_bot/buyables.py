@@ -8,8 +8,8 @@ BUILDING_TOOLTIP_XPATH = "//div[@id='tooltipBuilding']"
 UPGRADE_TOOLTIP_XPATH = "//div[@id='tooltipCrate']"
 WAIT_AFTER_HOVER = 0.1
 
-CURSOR_BASE_CPS = 0.1
 BUILDING_PRICE_MULTIPLIER = 1.15
+CURSOR_BASE_CPS = 0.1
 
 
 class Buyable:
@@ -38,6 +38,7 @@ class Buyable:
 
         # if an upgrade is in the second row or below
         # wait a bit for the upgrades panel to expand
+        # TODO bug, hovers on buildings?
         if self.hover_before_buy:
             try:
                 self.cookie_clicker.manager.move_to_element(element)

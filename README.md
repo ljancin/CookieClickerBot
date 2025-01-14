@@ -55,3 +55,13 @@ Default value is `null`.
 Key which toggles bot's clicking on the cookie.
 
 Default value is `F4`.
+
+## `max_buildings_missing_to_chase_achievement`
+
+The bot will try to reach achievements given for owning a certain amount of buildings.
+("Have 50/100/150/... [building]s")
+
+This value determines how close a number of buildings needs to be to the next achievement 
+so that the bot would try to reach it. Note that it will only start buying if there is 
+enough cookies in bank to buy all missing buildings without waiting.
+ 
