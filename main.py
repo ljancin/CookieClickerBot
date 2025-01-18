@@ -40,10 +40,18 @@ def get_best_buy(cookie_clicker):
         buyables_wait_for_sorted = sort_by_profitability(buyables_wait_for)
         buyables_wait_for_sorted_best_buy = buyables_wait_for_sorted[0]
 
+        def get_available_wait_for_index(_buyables, _wait_for_index_target):
+            res_index = _wait_for_index_target
+            while res_index >= len(_buyables) - 1:
+                res_index -= 1
+            return res_index
+
+
         if buyables_wait_for_sorted_best_buy.can_buy():
             wait_for_buyable = buyables_wait_for_sorted_best_buy
         else:
-            wait_for_buyable = buyables_wait_for_sorted[wait_for_index]
+            available_wait_for_index = get_available_wait_for_index(buyables_wait_for_sorted, wait_for_index)
+            wait_for_buyable = buyables_wait_for_sorted[available_wait_for_index]
 
         elapsed_time = 0
         while elapsed_time < time_to_buy_best_ratio_buyable:
@@ -52,13 +60,17 @@ def get_best_buy(cookie_clicker):
 
                 # TODO check if there evaluable buyables are empty!
                 buyables_wait_for = cookie_clicker_copy.get_evaluable_buyables()[1:]
+                if len(buyables_wait_for) == 0:
+                    break
+
                 buyables_wait_for_sorted = sort_by_profitability(buyables_wait_for)
                 buyables_wait_for_sorted_best_buy = buyables_wait_for_sorted[0]
 
                 if buyables_wait_for_sorted_best_buy.can_buy():
                     wait_for_buyable = buyables_wait_for_sorted_best_buy
                 else:
-                    wait_for_buyable = buyables_wait_for_sorted[wait_for_index]
+                    available_wait_for_index = get_available_wait_for_index(buyables_wait_for_sorted, wait_for_index)
+                    wait_for_buyable = buyables_wait_for_sorted[available_wait_for_index]
 
             else:
                 time_to_buy_wait_for_buyable = wait_for_buyable.time_to_buy()
@@ -155,11 +167,6 @@ def main():
             continue
 
         cookie_clicker.update_for_calculations()
-
-        # TODO pursue building number achievements
-        #   if you can afford it, if there are 3/5/? buildings to go
-        #   for the next 100/150/... achievement
-        #   buy the building
 
         best_upgrade_unknown = None
         if len(cookie_clicker.upgrades_unknown) > 0:

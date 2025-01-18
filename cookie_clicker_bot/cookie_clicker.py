@@ -92,6 +92,7 @@ class CookieClicker:
                 pass
 
         self.base_cps_dict = self.manager.execute_script(Scripts.GET_BUILDINGS_BASE_CPS)
+        print()
 
     def simulation_copy(self):
         cookie_clicker_copy = CookieClicker()

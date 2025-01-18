@@ -1,5 +1,8 @@
 return Object.keys(Game.UpgradesById)
-    .filter(key => Game.UpgradesById[key].bought === 0 && Game.UpgradesById[key].unlocked === 1)
+    .filter(key =>
+            Game.UpgradesById[key].bought === 0
+        &&  Game.UpgradesById[key].unlocked === 1
+        &&  Game.UpgradesById[key].pool !== "toggle")
     .reduce((acc, key) => {
         let obj = Game.UpgradesById[key];
         let returnObject = {

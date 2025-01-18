@@ -131,7 +131,9 @@ class BuildingUpgradeMultiplier(Upgrade):
         super().buy_simulation()
 
         self.building.total_cps *= (self.amount + 1)
-        self.building.gain = self.building.total_cps / self.building.count
+        if self.building.count != 0:
+            self.building.gain = self.building.total_cps / self.building.count
+
 
 
 class BuildingUpgradeAmount(Upgrade):
@@ -149,7 +151,8 @@ class BuildingUpgradeAmount(Upgrade):
         super().buy_simulation()
 
         self.building.total_cps += self.amount
-        self.building.gain = self.building.total_cps / self.building.count
+        if self.building.count != 0:
+            self.building.gain = self.building.total_cps / self.building.count
 
 
 class CompositeBuildingUpgrade(Upgrade):
@@ -178,7 +181,8 @@ class CompositeBuildingUpgrade(Upgrade):
                 continue
 
             b.total_cps *= (self.amount + 1)
-            b.gain = b.total_cps / b.count
+            if b.count != 0:
+                b.gain = b.total_cps / b.count
 
 
 class CpsUpgrade(Upgrade):
