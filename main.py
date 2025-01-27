@@ -1,6 +1,6 @@
 import numpy as np
 
-from cookie_clicker_bot.cookie_clicker import CookieClicker, CLICK_SEGMENT_DURATION
+from cookie_clicker_bot.cookie_clicker import CookieClicker, CLICK_SEGMENT_DURATION, CLICK_FRENZY
 
 
 def sort_by_profitability(buyables):
@@ -139,11 +139,13 @@ def main():
     n_buffs_previous = 0
 
     while True:
+        # TODO if bank == 0 -> reincarnated -> next_buy = None
+
         # TODO research upgrades
         evaluable_buyables = cookie_clicker.get_evaluable_buyables()
 
         # if there is no next buy, don't click on cookie but directly go determine what the best buy is
-        if next_buy is not None or len(evaluable_buyables) == 0:
+        if next_buy is not None or len(evaluable_buyables) == 0 or CLICK_FRENZY in cookie_clicker.buffs:
             click_segment_duration = CLICK_SEGMENT_DURATION
             if next_buy is not None:
                 click_segment_duration = min(CLICK_SEGMENT_DURATION, next_buy.time_to_buy())
@@ -158,22 +160,25 @@ def main():
 
         cookie_clicker.update_periodic()
 
-        n_buffs = cookie_clicker.n_buffs
+        n_buffs = len(cookie_clicker.buffs)
         if n_buffs_previous != n_buffs:
             next_buy = None
         n_buffs_previous = n_buffs
 
-        if next_buy is not None and cookie_clicker.bank < next_buy.price:
+        if next_buy is not None and cookie_clicker.bank < next_buy.price or CLICK_FRENZY in cookie_clicker.buffs:
             continue
 
         cookie_clicker.update_for_calculations()
 
-        best_upgrade_unknown = None
-        if len(cookie_clicker.upgrades_unknown) > 0:
+        buildings_not_owned = list(filter(lambda b: b.count == 0, cookie_clicker.buildings))
+        buyables_unknown = buildings_not_owned + cookie_clicker.upgrades_unknown
+
+        best_buyable_unknown = None
+        if len(buyables_unknown) > 0:
             bought_unknown = False
-            for u in cookie_clicker.upgrades_unknown:
+            for u in buyables_unknown:
                 if u.can_buy():
-                    print(f"Buying other upgrade {u.name}", flush=True)
+                    print(f"Buying unknown buyable {u.name}", flush=True)
                     u.buy()
                     bought_unknown = True
                     break
@@ -182,7 +187,7 @@ def main():
                 next_buy = None
                 continue
 
-            best_upgrade_unknown = cookie_clicker.upgrades_unknown[0]
+            best_buyable_unknown = buyables_unknown[0]
 
         if next_buy is None:
             best_buy = get_best_buy(cookie_clicker)
@@ -198,11 +203,11 @@ def main():
             next_buy = None
 
         else:
-            if best_upgrade_unknown is None or best_buy.price < best_upgrade_unknown.price:
+            if best_buyable_unknown is None or best_buy.price < best_buyable_unknown.price:
                 next_buy = best_buy
             else:
-                next_buy = best_upgrade_unknown
-                time_to_buy = best_upgrade_unknown.time_to_buy()
+                next_buy = best_buyable_unknown
+                time_to_buy = best_buyable_unknown.time_to_buy()
 
             if next_buy is not None and cookie_clicker.building_for_number_achievement is not None:
                 cookie_clicker.building_for_number_achievement.buy()

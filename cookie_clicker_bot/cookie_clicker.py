@@ -29,20 +29,21 @@ CLICK_SEGMENT_DURATION = 2
 CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL = 1
 CHECK_CLICK_FREQUENCY_INTERVAL_TARGET = 5
 
-BUILDING_NUMBER_ACHIEVEMENTS = [50, 100, 150, 200, 250, 300]
+BUILDING_NUMBER_ACHIEVEMENTS = [50, 100, 150, 200, 250, 300, 350, 400]
 BUILDING_NUMBER_ACHIEVEMENTS_SPECIAL = {
-    CURSOR_NAME: [50, 100, 200, 250, 300]
+    CURSOR_NAME: [50, 100, 200, 300, 400]
 }
 
 TOOLTIP_TO_FULL_NAME = {
     "Antim. condenser": "Antimatter condenser"
 }
 
+CLICK_FRENZY = "Click frenzy"
+
 
 class CookieClicker:
     tooltip_parser = TootlipParser()
     manager = None
-    base_cps_dict = {}
 
     check_click_frequency_interval = CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL
 
@@ -61,7 +62,7 @@ class CookieClicker:
         self.cookies_per_click = ZERO_BIG_NUMBER
         self.cps = ZERO_BIG_NUMBER
         self.clicking_cps = ZERO_BIG_NUMBER
-        self.n_buffs = 0
+        self.buffs = 0
 
         self.clicks_in_interval = 0
         self.avg_clicks_per_second = 0
@@ -91,12 +92,8 @@ class CookieClicker:
             except (Exception,):
                 pass
 
-        self.base_cps_dict = self.manager.execute_script(Scripts.GET_BUILDINGS_BASE_CPS)
-        print()
-
     def simulation_copy(self):
         cookie_clicker_copy = CookieClicker()
-        cookie_clicker_copy.base_cps_dict = self.base_cps_dict
 
         for b in self.buildings:
             cookie_clicker_copy.buildings.append(b.copy(cookie_clicker_copy))
@@ -194,6 +191,7 @@ class CookieClicker:
                 tooltip_html = self.manager.execute_script(Scripts.GET_BUILDING_TOOLTIP, building_name)
             except Exception as e:
                 print(building_name, flush=True)
+                # 152.661 billion
                 raise
 
             self.tooltip_parser.Reset()
@@ -313,7 +311,7 @@ class CookieClicker:
 
     def update_periodic(self):
         self.bank = BigNumberFromString(self.manager.execute_script(Scripts.GET_BANK))
-        self.n_buffs = self.manager.execute_script(Scripts.GET_N_BUFFS)
+        self.buffs = self.manager.execute_script(Scripts.GET_BUFFS)
 
     def update_for_calculations(self):
         self.cps = BigNumber(self.manager.execute_script(Scripts.GET_CPS)) + self.clicking_cps

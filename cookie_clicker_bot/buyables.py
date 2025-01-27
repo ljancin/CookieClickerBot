@@ -75,10 +75,8 @@ class Buyable:
 class Building(Buyable):
     def __init__(self, cookie_clicker, name, count, price, total_cps, elementId):
         if count == 0:
-            if name == "Cursor":
-                gain = BigNumber(CURSOR_BASE_CPS)
-            else:
-                gain = BigNumber(cookie_clicker.base_cps_dict[name]["baseCps"])
+            gain = ZERO_BIG_NUMBER
+
         else:
             gain = total_cps / count
 
@@ -133,7 +131,6 @@ class BuildingUpgradeMultiplier(Upgrade):
         self.building.total_cps *= (self.amount + 1)
         if self.building.count != 0:
             self.building.gain = self.building.total_cps / self.building.count
-
 
 
 class BuildingUpgradeAmount(Upgrade):
