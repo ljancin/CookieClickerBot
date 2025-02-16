@@ -33,7 +33,7 @@ class TootlipParser(HTMLParser):
             self.lastClass = attr0[1]
 
     def handle_endtag(self, tag):
-        if tag == "div" and len(self.data) > 0:
+        if (tag == "div" or tag == "span") and len(self.data) > 0:
             data = ''.join(self.data)
 
             if "price" in self.lastClass:
@@ -59,5 +59,5 @@ class TootlipParser(HTMLParser):
                 self.totalCps = BigNumberFromString(totalCpsString)
 
     def handle_data(self, data):
-        if "price" in self.lastClass or self.lastClass == "descriptionBlock":
+        if self.lastClass is not None and ("price" in self.lastClass or self.lastClass == "descriptionBlock"):
             self.data.append(data)

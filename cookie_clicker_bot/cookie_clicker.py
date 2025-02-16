@@ -29,9 +29,9 @@ CLICK_SEGMENT_DURATION = 2
 CHECK_CLICK_FREQUENCY_INTERVAL_INITIAL = 1
 CHECK_CLICK_FREQUENCY_INTERVAL_TARGET = 5
 
-BUILDING_NUMBER_ACHIEVEMENTS = [50, 100, 150, 200, 250, 300, 350, 400]
+BUILDING_NUMBER_ACHIEVEMENTS = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700]
 BUILDING_NUMBER_ACHIEVEMENTS_SPECIAL = {
-    CURSOR_NAME: [50, 100, 200, 300, 400]
+    CURSOR_NAME: [50, 100, 200, 300, 400, 500, 600, 700, 800]
 }
 
 TOOLTIP_TO_FULL_NAME = {
@@ -191,8 +191,8 @@ class CookieClicker:
                 tooltip_html = self.manager.execute_script(Scripts.GET_BUILDING_TOOLTIP, building_name)
             except Exception as e:
                 print(building_name, flush=True)
+                return
                 # 152.661 billion
-                raise
 
             self.tooltip_parser.Reset()
             self.tooltip_parser.feed(tooltip_html)

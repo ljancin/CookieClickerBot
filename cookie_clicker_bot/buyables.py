@@ -34,7 +34,10 @@ class Buyable:
         if "enabled" not in element_class:
             return False
 
-        self.cookie_clicker.manager.execute_script(Scripts.SCROLL_INTO_VIEW, element)
+        try:
+            self.cookie_clicker.manager.execute_script(Scripts.SCROLL_INTO_VIEW, element)
+        except (Exception,):
+            return False
 
         # if an upgrade is in the second row or below
         # wait a bit for the upgrades panel to expand
